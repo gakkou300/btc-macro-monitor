@@ -1,5 +1,14 @@
 {
-  "cpi": {"date": null, "value": null},
-  "nfp": {"date": null, "value": null},
-  "fomc": {"url": null, "date": null}
+  "cpi": {
+    "date": "2026-04-01",
+    "value": "332.407"
+  },
+  "nfp": {
+    "date": "2026-04-01",
+    "value": "158736"
+  },
+  "fomc": {
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm",
+    "date": "2026-04-29"
+  }
 }
