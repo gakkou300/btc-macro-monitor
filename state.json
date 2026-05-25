@@ -10,5 +10,19 @@
   "fomc": {
     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm",
     "date": "2026-04-29"
+  },
+  "market": {
+    "dxy": {
+      "value": 98.9749984741211
+    },
+    "us10y": {
+      "value": 4.558000087738037
+    },
+    "nasdaq": {
+      "value": 26343.970703125
+    },
+    "vix": {
+      "value": 16.649999618530273
+    }
   }
 }
