@@ -23,8 +23,10 @@ def summarize(data: dict) -> dict:
     """
     Summarize indicator data using Claude.
 
-    Args:
-        data: dict containing 'name' and either 'content' (FOMC) or 'value'+'date' (FRED).
+    Handles three data shapes:
+      - FOMC  : data has 'content' key
+      - FRED  : data has 'date' key (no prev_value)
+      - Market: data has 'prev_value' key
 
     Returns:
         {"judgment": str, "emoji": str, "summary": str}
@@ -47,12 +49,38 @@ def summarize(data: dict) -> dict:
 
 
 def _build_user_message(data: dict) -> str:
+    # FOMC – has document body
     if data.get("content"):
         return (
             f"指標: {data['name']}\n"
             f"日付: {data.get('date', '不明')}\n\n"
             f"本文:\n{data['content']}"
         )
+
+    # Market – has prev_value for change context
+    if "prev_value" in data:
+        value = data["value"]
+        prev = data["prev_value"]
+        change_pct = data.get("change_pct", 0.0)
+        change_abs = data.get("change_abs", 0.0)
+        timestamp = data.get("timestamp", "不明")
+
+        if prev is not None:
+            change_str = f"{change_abs:+.4f} ({change_pct:+.2f}%)"
+            prev_str = f"{prev:.4f}"
+        else:
+            change_str = "初回取得"
+            prev_str = "不明"
+
+        return (
+            f"指標: {data['name']}\n"
+            f"現在値: {value:.4f}\n"
+            f"前回値: {prev_str}\n"
+            f"変化: {change_str}\n"
+            f"取得時刻: {timestamp}"
+        )
+
+    # FRED – latest value + release date
     return (
         f"指標: {data['name']}\n"
         f"最新値: {data.get('value', '不明')}\n"
@@ -77,6 +105,8 @@ def _fallback_summary(data: dict) -> dict:
     parts = [data.get("name", "不明")]
     if data.get("date"):
         parts.append(data["date"])
-    if data.get("value"):
+    if data.get("value") is not None:
         parts.append(f"値: {data['value']}")
+    if data.get("change_pct") is not None:
+        parts.append(f"変化: {data['change_pct']:+.2f}%")
     return {"judgment": "中立", "emoji": "🟡", "summary": " / ".join(parts)}
