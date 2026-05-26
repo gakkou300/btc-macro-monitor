@@ -31,6 +31,12 @@ _DEFAULT_STATE: dict = {
         "m2sl":  {"date": None, "value": None},
         "walcl": {"date": None, "value": None},
     },
+    # Phase 4: Glassnode on-chain
+    "glassnode": {
+        "fear_greed":   {"value": None, "zone": None, "date": None},
+        "etf_flow":     {"date": None, "value": None},
+        "funding_rate": {"value": None},
+    },
 }
 
 # Phase 2: market thresholds
@@ -229,3 +235,93 @@ def update_liquidity(key: str, date_str: str, value: float) -> None:
     state.setdefault("liquidity", {})[key] = {"date": date_str, "value": value}
     _save_state(state)
     logger.info(f"[{key.upper()}] Liquidity state updated: {date_str} / {value}")
+
+
+# ── Phase 4: Glassnode on-chain ───────────────────────────────────────────────
+
+def check_fear_greed_change(current_value: float, current_zone: str) -> dict:
+    """Notify when the Fear & Greed zone changes (e.g. fear → greed)."""
+    state = _load_state()
+    fg = state.get("glassnode", {}).get("fear_greed", {})
+    prev_zone = fg.get("zone")
+    prev_value = fg.get("value")
+
+    if prev_zone is None:
+        # First run — store but don't alert
+        return {
+            "changed": False,
+            "prev_zone": None,
+            "prev_value": None,
+        }
+
+    return {
+        "changed": current_zone != prev_zone,
+        "prev_zone": prev_zone,
+        "prev_value": float(prev_value) if prev_value is not None else None,
+    }
+
+
+def update_fear_greed(value: float, zone: str, date_str: str) -> None:
+    state = _load_state()
+    state.setdefault("glassnode", {})["fear_greed"] = {
+        "value": value,
+        "zone": zone,
+        "date": date_str,
+    }
+    _save_state(state)
+    logger.info(f"[FEAR_GREED] State updated: {value:.1f} / {zone} / {date_str}")
+
+
+def check_etf_flow_change(current_date: str) -> dict:
+    """Notify whenever a new daily ETF flow data point appears."""
+    state = _load_state()
+    prev_date = state.get("glassnode", {}).get("etf_flow", {}).get("date")
+    return {
+        "changed": current_date != prev_date,
+        "prev_date": prev_date,
+    }
+
+
+def update_etf_flow(date_str: str, value: float) -> None:
+    state = _load_state()
+    state.setdefault("glassnode", {})["etf_flow"] = {
+        "date": date_str,
+        "value": value,
+    }
+    _save_state(state)
+    logger.info(f"[ETF_FLOW] State updated: {date_str} / {value:+,.2f} BTC")
+
+
+_FUNDING_RATE_THRESHOLD = 0.0005  # 0.05% per 8h
+
+
+def check_funding_rate_change(current_value: float) -> dict:
+    """
+    Notify on sign flip (positive ↔ negative) or when |rate| crosses the
+    0.05% threshold going from below to above (or above to below).
+    """
+    state = _load_state()
+    raw = state.get("glassnode", {}).get("funding_rate", {}).get("value")
+    prev_value = float(raw) if raw is not None else None
+
+    if prev_value is None:
+        return {"changed": False, "prev_value": None}
+
+    sign_changed = (current_value >= 0) != (prev_value >= 0)
+    prev_extreme = abs(prev_value) >= _FUNDING_RATE_THRESHOLD
+    curr_extreme = abs(current_value) >= _FUNDING_RATE_THRESHOLD
+    threshold_crossed = prev_extreme != curr_extreme
+
+    return {
+        "changed": sign_changed or threshold_crossed,
+        "prev_value": prev_value,
+        "sign_changed": sign_changed,
+        "threshold_crossed": threshold_crossed,
+    }
+
+
+def update_funding_rate(value: float) -> None:
+    state = _load_state()
+    state.setdefault("glassnode", {})["funding_rate"] = {"value": value}
+    _save_state(state)
+    logger.info(f"[FUNDING_RATE] State updated: {value:+.6f}")

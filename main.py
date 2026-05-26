@@ -17,6 +17,10 @@ from fetchers.market import fetch_market, TICKERS as MARKET_TICKERS
 from fetchers.sec import fetch_sec_filings
 from fetchers.stablecoin import fetch_stablecoin, fetch_btc_exchange_holdings, STABLECOINS
 from fetchers.liquidity import fetch_liquidity, SERIES as LIQUIDITY_SERIES
+from fetchers.glassnode import (
+    fetch_fear_greed, fetch_etf_flow, fetch_funding_rate,
+    get_fear_greed_zone,
+)
 import detector
 import summarizer
 import notifier
@@ -230,6 +234,89 @@ def run_liquidity() -> None:
                 pass
 
 
+# ── Phase 4: Glassnode on-chain ───────────────────────────────────────────────
+
+def run_glassnode() -> None:
+    # --- Fear & Greed Index ---
+    try:
+        data = fetch_fear_greed()
+        result = detector.check_fear_greed_change(data["value"], data["zone"])
+
+        if result["changed"]:
+            logger.info(
+                f"[FEAR_GREED] Zone change: {result['prev_zone']} → {data['zone']} "
+                f"(value: {data['value']:.0f})"
+            )
+            # Enrich data with prev zone label for summarizer
+            _, prev_zone_label = get_fear_greed_zone(result["prev_value"] or 0)
+            data["prev_zone_label"] = prev_zone_label
+            summary = summarizer.summarize(data)
+            notifier.notify(data["name"], summary, data["url"], data["date"])
+
+        detector.update_fear_greed(data["value"], data["zone"], data["date"])
+
+        if not result["changed"]:
+            logger.info(
+                f"[FEAR_GREED] No zone change ({data['zone']}, value: {data['value']:.0f})"
+            )
+    except Exception as e:
+        logger.error(f"[FEAR_GREED] Error: {e}")
+        try:
+            notifier.notify_error("恐怖&強欲指数")
+        except Exception:
+            pass
+
+    # --- US Spot ETF Net Flows ---
+    try:
+        data = fetch_etf_flow()
+        result = detector.check_etf_flow_change(data["date"])
+
+        if result["changed"]:
+            logger.info(
+                f"[ETF_FLOW] New daily data: {data['date']} / {data['value']:+,.2f} BTC"
+            )
+            summary = summarizer.summarize(data)
+            notifier.notify(data["name"], summary, data["url"], data["date"])
+            detector.update_etf_flow(data["date"], data["value"])
+        else:
+            logger.info(f"[ETF_FLOW] No new data (latest: {data['date']})")
+    except Exception as e:
+        logger.error(f"[ETF_FLOW] Error: {e}")
+        try:
+            notifier.notify_error("米国スポットBTC ETF純流入")
+        except Exception:
+            pass
+
+    # --- Funding Rate (Perpetual) ---
+    try:
+        data = fetch_funding_rate()
+        result = detector.check_funding_rate_change(data["value"])
+
+        if result["changed"]:
+            logger.info(
+                f"[FUNDING_RATE] Significant change: {result['prev_value']:+.6f} → "
+                f"{data['value']:+.6f}"
+            )
+            data["prev_value"] = result["prev_value"]
+            data["sign_changed"] = result.get("sign_changed", False)
+            data["threshold_crossed"] = result.get("threshold_crossed", False)
+            summary = summarizer.summarize(data)
+            notifier.notify(data["name"], summary, data["url"], data["date"])
+
+        detector.update_funding_rate(data["value"])
+
+        if not result["changed"]:
+            logger.info(
+                f"[FUNDING_RATE] No significant change (value: {data['value']:+.6f})"
+            )
+    except Exception as e:
+        logger.error(f"[FUNDING_RATE] Error: {e}")
+        try:
+            notifier.notify_error("BTCパーペチュアルFunding Rate")
+        except Exception:
+            pass
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -237,7 +324,7 @@ def main() -> None:
     parser.add_argument(
         "--mode",
         default="monitor",
-        choices=["monitor", "sec", "stablecoin", "liquidity"],
+        choices=["monitor", "sec", "stablecoin", "liquidity", "glassnode"],
         help="Which indicator group to run (default: monitor = Phase 1+2)",
     )
     args = parser.parse_args()
@@ -256,6 +343,8 @@ def main() -> None:
         run_stablecoin()
     elif args.mode == "liquidity":
         run_liquidity()
+    elif args.mode == "glassnode":
+        run_glassnode()
 
     logger.info("=== BTC Monitor done ===")
 

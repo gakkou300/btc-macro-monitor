@@ -57,6 +57,43 @@ def _build_user_message(data: dict) -> str:
             f"本文:\n{data['content']}"
         )
 
+    # Fear & Greed Index – zone change
+    if data.get("key") == "fear_greed":
+        prev_zone_label = data.get("prev_zone_label", "不明")
+        return (
+            f"指標: {data['name']}\n"
+            f"現在値: {data['value']:.0f} ({data.get('zone_label', '不明')})\n"
+            f"前回ゾーン: {prev_zone_label}\n"
+            f"日付: {data.get('date', '不明')}"
+        )
+
+    # ETF Net Flows – new daily data
+    if data.get("key") == "etf_flow":
+        value = data["value"]
+        direction = "純流入" if value >= 0 else "純流出"
+        return (
+            f"指標: {data['name']}\n"
+            f"日次{direction}: {value:+,.0f} BTC\n"
+            f"日付: {data.get('date', '不明')}"
+        )
+
+    # Funding Rate – sign flip or threshold cross
+    if data.get("key") == "funding_rate":
+        value = data["value"]
+        prev = data.get("prev_value")
+        prev_str = f"{prev:+.4f}%" if prev is not None else "不明"
+        sign_note = ""
+        if data.get("sign_changed"):
+            sign_note = " ⚠️ 符号反転"
+        elif data.get("threshold_crossed"):
+            sign_note = " ⚠️ 閾値(±0.05%)越え"
+        return (
+            f"指標: {data['name']}\n"
+            f"現在レート: {value:+.4f}%{sign_note}\n"
+            f"前回レート: {prev_str}\n"
+            f"取得時刻: {data.get('timestamp', '不明')}"
+        )
+
     # Market – has prev_value for change context
     if "prev_value" in data:
         value = data["value"]
