@@ -55,8 +55,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
           git diff --staged --quiet || git commit -m "chore: update monitor state [skip ci]"
-          git pull --rebase origin main
-          git push
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "Push attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
 
   # ── Phase 4: Glassnode on-chain ────────────────────────────────────────────
   glassnode_check:
@@ -86,8 +89,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
           git diff --staged --quiet || git commit -m "chore: update glassnode state [skip ci]"
-          git pull --rebase origin main
-          git push
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "Push attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
 
   # ── Phase 3: SEC EDGAR ─────────────────────────────────────────────────────
   sec_check:
@@ -115,8 +121,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
           git diff --staged --quiet || git commit -m "chore: update sec state [skip ci]"
-          git pull --rebase origin main
-          git push
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "Push attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
 
   # ── Phase 3: Stablecoin & BTC exchange holdings ────────────────────────────
   stablecoin_check:
@@ -146,8 +155,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
           git diff --staged --quiet || git commit -m "chore: update stablecoin state [skip ci]"
-          git pull --rebase origin main
-          git push
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "Push attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
 
   # ── Phase 3: Liquidity (M2 / WALCL) ────────────────────────────────────────
   liquidity_check:
@@ -176,5 +188,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
           git diff --staged --quiet || git commit -m "chore: update liquidity state [skip ci]"
-          git pull --rebase origin main
-          git push
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "Push attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
