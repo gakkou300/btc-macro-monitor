@@ -15,7 +15,7 @@ from fetchers.fred import fetch_fred_series
 from fetchers.fomc import fetch_latest_fomc
 from fetchers.market import fetch_market, TICKERS as MARKET_TICKERS
 from fetchers.sec import fetch_sec_filings
-from fetchers.stablecoin import fetch_stablecoin, fetch_btc_exchange_holdings, STABLECOINS
+from fetchers.stablecoin import fetch_stablecoin, STABLECOINS
 from fetchers.liquidity import fetch_liquidity, SERIES as LIQUIDITY_SERIES
 import detector
 import summarizer
@@ -167,33 +167,6 @@ def run_stablecoin() -> None:
             except Exception:
                 pass
         time.sleep(2)  # CoinGecko free-tier rate limit
-
-    # BTC exchange holdings via Coinglass
-    try:
-        data = fetch_btc_exchange_holdings()
-        result = detector.check_btc_exchange_change(data["value"])
-
-        if result["changed"]:
-            logger.info(f"[BTC_EXCHANGE] Holdings change: {result['change_pct']:+.2f}%")
-            notifier.notify_change(
-                data["name"],
-                data["value"],
-                result["prev_value"],
-                result["change_pct"],
-                data["timestamp"],
-                unit="BTC",
-            )
-            detector.update_stablecoin("btc_exchange", data["value"])
-        else:
-            logger.info(
-                f"[BTC_EXCHANGE] No significant change ({result['change_pct']:+.2f}%)"
-            )
-    except Exception as e:
-        logger.error(f"[BTC_EXCHANGE] Error: {e}")
-        try:
-            notifier.notify_error("取引所BTC保有量")
-        except Exception:
-            pass
 
 
 # ── Phase 3: Liquidity (M2 / WALCL) ──────────────────────────────────────────

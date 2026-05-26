@@ -1,5 +1,4 @@
 import os
-import time
 import logging
 import requests
 from datetime import datetime, timezone
@@ -7,9 +6,6 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
-# NOTE: Coinglass endpoint for exchange BTC reserves.
-# Verify at https://docs.coinglass.com if response format changes.
-COINGLASS_BASE = "https://open-api.coinglass.com/public/v2"
 
 STABLECOINS: dict[str, dict] = {
     "usdt": {
@@ -55,8 +51,7 @@ def fetch_stablecoin(key: str) -> dict:
         timeout=30,
     )
     resp.raise_for_status()
-    data = resp.json()
-    supply = float(data["market_data"]["circulating_supply"])
+    supply = float(resp.json()["market_data"]["circulating_supply"])
 
     return {
         "key": key,
@@ -64,42 +59,5 @@ def fetch_stablecoin(key: str) -> dict:
         "symbol": info["symbol"],
         "value": supply,
         "url": info["url"],
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-    }
-
-
-def fetch_btc_exchange_holdings() -> dict:
-    """
-    Fetch total BTC holdings across exchanges via Coinglass API.
-    Sums balance across all listed exchanges.
-
-    Returns:
-        dict with: key, name, value (total BTC float), url, timestamp
-    """
-    api_key = os.environ["COINGLASS_API_KEY"]
-    resp = requests.get(
-        f"{COINGLASS_BASE}/indicator/exchange_list_BTC",
-        headers={"coinglassSecret": api_key},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-
-    if data.get("code") != "0":
-        raise ValueError(f"Coinglass API error: {data.get('msg', 'unknown error')}")
-
-    exchange_list = data.get("data", [])
-    total_btc = sum(
-        float(ex["balance"])
-        for ex in exchange_list
-        if ex.get("balance") is not None
-    )
-
-    return {
-        "key": "btc_exchange",
-        "name": "取引所BTC保有量",
-        "symbol": "BTC",
-        "value": total_btc,
-        "url": "https://www.coinglass.com/BitcoinTotalBalance",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
