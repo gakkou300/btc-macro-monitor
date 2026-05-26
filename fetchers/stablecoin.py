@@ -1,11 +1,12 @@
 import os
 import logging
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 logger = logging.getLogger(__name__)
 
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
+GLASSNODE_BASE = "https://api.glassnode.com/v1/metrics"
 
 STABLECOINS: dict[str, dict] = {
     "usdt": {
@@ -59,5 +60,47 @@ def fetch_stablecoin(key: str) -> dict:
         "symbol": info["symbol"],
         "value": supply,
         "url": info["url"],
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+    }
+
+
+def fetch_btc_exchange_holdings() -> dict:
+    """
+    Fetch total BTC held across exchanges via Glassnode API.
+    Uses the distribution/balance_exchanges endpoint (daily resolution).
+    Requires GLASSNODE_API_KEY environment variable.
+
+    Returns:
+        dict with: key, name, symbol, value (BTC float), url, timestamp
+    """
+    api_key = os.environ["GLASSNODE_API_KEY"]
+
+    resp = requests.get(
+        f"{GLASSNODE_BASE}/distribution/balance_exchanges",
+        params={
+            "a": "BTC",
+            "i": "24h",          # daily resolution
+            "api_key": api_key,
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    if not data:
+        raise ValueError("Glassnode returned empty data for balance_exchanges")
+
+    # Response is a list of {t: timestamp, v: value}; last entry = most recent
+    latest = data[-1]
+    btc_total = float(latest["v"])
+    data_date = date.fromtimestamp(latest["t"]).isoformat()
+
+    return {
+        "key": "btc_exchange",
+        "name": "取引所BTC保有量",
+        "symbol": "BTC",
+        "value": btc_total,
+        "data_date": data_date,
+        "url": "https://studio.glassnode.com/metrics?a=BTC&m=distribution.BalanceExchanges",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }

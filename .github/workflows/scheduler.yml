@@ -106,6 +106,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+          GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
         run: python main.py --mode stablecoin
       - name: Commit updated state
         run: |

@@ -27,10 +27,13 @@ git push -u origin main
 
 リポジトリの `Settings > Secrets and variables > Actions` から以下を登録：
 
-| Secret名 | 取得元 |
-|----------|--------|
-| `FRED_API_KEY` | https://fred.stlouisfed.org/docs/api/api_key.html |
-| `ANTHROPIC_API_KEY` | https://console.anthropic.com/ |
+| Secret名 | 取得元 | 備考 |
+|----------|--------|------|
+| `FRED_API_KEY` | https://fred.stlouisfed.org/docs/api/api_key.html | 無料 |
+| `ANTHROPIC_API_KEY` | https://console.anthropic.com/ | 従量課金（$5で数年分） |
+| `DISCORD_WEBHOOK_URL` | Discord サーバー設定 → 連携サービス → ウェブフック | 無料 |
+| `GLASSNODE_API_KEY` | https://studio.glassnode.com/settings/api → Sign Up → API Keys | 無料枠あり |
+| `COINGECKO_API_KEY` | https://www.coingecko.com/en/api → Demo API | 任意・レート制限緩和用 |
 | `LINE_NOTIFY_TOKEN` | https://notify-bot.line.me/my/ |
 
 ### 3. GitHub Actionsを有効化

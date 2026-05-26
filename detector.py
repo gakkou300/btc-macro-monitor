@@ -23,8 +23,9 @@ _DEFAULT_STATE: dict = {
     # Phase 3
     "sec": {"date": None, "seen_ids": []},
     "stablecoin": {
-        "usdt": {"value": None},
-        "usdc": {"value": None},
+        "usdt":         {"value": None},
+        "usdc":         {"value": None},
+        "btc_exchange": {"value": None},
     },
     "liquidity": {
         "m2sl":  {"date": None, "value": None},
@@ -190,6 +191,14 @@ def check_stablecoin_change(key: str, current_value: float) -> dict:
     raw = state.get("stablecoin", {}).get(key, {}).get("value")
     prev = float(raw) if raw is not None else None
     return _check_pct_change(prev, current_value, threshold_pct=2.0)
+
+
+def check_btc_exchange_change(current_value: float) -> dict:
+    """Check total exchange BTC holdings change (threshold: ±1%)."""
+    state = _load_state()
+    raw = state.get("stablecoin", {}).get("btc_exchange", {}).get("value")
+    prev = float(raw) if raw is not None else None
+    return _check_pct_change(prev, current_value, threshold_pct=1.0)
 
 
 def update_stablecoin(key: str, value: float) -> None:
