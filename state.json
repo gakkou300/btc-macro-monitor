@@ -54,5 +54,12 @@
       "date": "2026-05-20",
       "value": 6713643.0
     }
+  },
+  "glassnode": {
+    "fear_greed": {
+      "value": 23.0,
+      "zone": "extreme_fear",
+      "date": "2026-05-29"
+    }
   }
 }
