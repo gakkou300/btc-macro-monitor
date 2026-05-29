@@ -84,7 +84,10 @@ def fetch_btc_exchange_holdings() -> dict:
         },
         timeout=30,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        raise RuntimeError(
+            f"Glassnode balance_exchanges returned HTTP {resp.status_code}: {resp.text[:200]}"
+        )
     data = resp.json()
 
     if not data:

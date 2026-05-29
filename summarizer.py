@@ -81,7 +81,8 @@ def _build_user_message(data: dict) -> str:
     if data.get("key") == "funding_rate":
         value = data["value"]
         prev = data.get("prev_value")
-        prev_str = f"{prev:+.4f}%" if prev is not None else "不明"
+        # value is in decimal form (e.g. 0.0001 = 0.01% per 8h) → multiply by 100 for display
+        prev_str = f"{prev * 100:+.4f}%" if prev is not None else "不明"
         sign_note = ""
         if data.get("sign_changed"):
             sign_note = " ⚠️ 符号反転"
@@ -89,7 +90,7 @@ def _build_user_message(data: dict) -> str:
             sign_note = " ⚠️ 閾値(±0.05%)越え"
         return (
             f"指標: {data['name']}\n"
-            f"現在レート: {value:+.4f}%{sign_note}\n"
+            f"現在レート: {value * 100:+.4f}%{sign_note}\n"
             f"前回レート: {prev_str}\n"
             f"取得時刻: {data.get('timestamp', '不明')}"
         )

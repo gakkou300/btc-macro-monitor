@@ -15,19 +15,30 @@ def _get_api_key() -> str:
     return key
 
 
-def _fetch(endpoint: str, params: dict) -> list:
+def _fetch_glassnode(endpoint: str, params: dict) -> list:
     """Fetch a Glassnode time-series endpoint. Returns list of {t, v} dicts."""
     api_key = _get_api_key()
-    params = {"a": "BTC", "api_key": api_key, **params}
-    resp = requests.get(f"{GLASSNODE_BASE}/{endpoint}", params=params, timeout=30)
-    resp.raise_for_status()
+    p = {"a": "BTC", "api_key": api_key, **params}
+    resp = requests.get(f"{GLASSNODE_BASE}/{endpoint}", params=p, timeout=30)
+    if not resp.ok:
+        raise RuntimeError(
+            f"Glassnode {endpoint} returned HTTP {resp.status_code}: {resp.text[:200]}"
+        )
     data = resp.json()
     if not data:
         raise ValueError(f"Glassnode returned empty data for {endpoint}")
     return data
 
 
-# ── Fear & Greed Index ────────────────────────────────────────────────────────
+# ── Fear & Greed Index (Alternative.me — free, no key) ───────────────────────
+
+_FG_ZONE_MAP = {
+    "Extreme Fear":  ("extreme_fear",  "極度の恐怖"),
+    "Fear":          ("fear",          "恐怖"),
+    "Neutral":       ("neutral",       "中立"),
+    "Greed":         ("greed",         "強欲"),
+    "Extreme Greed": ("extreme_greed", "極度の強欲"),
+}
 
 FEAR_GREED_ZONES = [
     (0,  24, "extreme_fear",  "極度の恐怖"),
@@ -48,16 +59,24 @@ def get_fear_greed_zone(value: float) -> tuple[str, str]:
 
 def fetch_fear_greed() -> dict:
     """
-    Fetch the latest BTC Fear & Greed Index from Glassnode.
+    Fetch the latest Crypto Fear & Greed Index from Alternative.me.
+    No API key required.
 
     Returns:
-        dict with: key, name, value (int 0-100), zone, zone_label, date, url
+        dict with: key, name, value (0-100), zone, zone_label, date, url
     """
-    data = _fetch("indicators/fear_greed_index", {"i": "24h"})
-    latest = data[-1]
-    value = float(latest["v"])
-    data_date = date.fromtimestamp(latest["t"]).isoformat()
-    zone, zone_label = get_fear_greed_zone(value)
+    resp = requests.get(
+        "https://api.alternative.me/fng/",
+        params={"limit": 1},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    entry = resp.json()["data"][0]
+    value = float(entry["value"])
+    data_date = date.fromtimestamp(int(entry["timestamp"])).isoformat()
+    zone, zone_label = _FG_ZONE_MAP.get(
+        entry["value_classification"], ("unknown", "不明")
+    )
 
     return {
         "key": "fear_greed",
@@ -66,12 +85,12 @@ def fetch_fear_greed() -> dict:
         "zone": zone,
         "zone_label": zone_label,
         "date": data_date,
-        "url": "https://studio.glassnode.com/metrics?a=BTC&m=indicators.FearGreed",
+        "url": "https://alternative.me/crypto/fear-and-greed-index/",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
 
-# ── US Spot ETF Net Flows ─────────────────────────────────────────────────────
+# ── US Spot ETF Net Flows (Glassnode) ─────────────────────────────────────────
 
 def fetch_etf_flow() -> dict:
     """
@@ -80,7 +99,7 @@ def fetch_etf_flow() -> dict:
     Returns:
         dict with: key, name, value (BTC float), date, url
     """
-    data = _fetch("institutions/us_spot_etf_flows_net", {"i": "24h"})
+    data = _fetch_glassnode("institutions/us_spot_etf_flows_net", {"i": "24h"})
     latest = data[-1]
     value = float(latest["v"])
     data_date = date.fromtimestamp(latest["t"]).isoformat()
@@ -95,25 +114,34 @@ def fetch_etf_flow() -> dict:
     }
 
 
-# ── Funding Rate (Perpetual) ──────────────────────────────────────────────────
+# ── Funding Rate Perpetual (Binance — free, no key) ───────────────────────────
 
 def fetch_funding_rate() -> dict:
     """
-    Fetch the latest BTC perpetual futures funding rate from Glassnode.
+    Fetch the latest BTC perpetual futures funding rate from Binance.
+    No API key required.
+    Value is in decimal form (e.g. 0.0001 = 0.01% per 8h).
 
     Returns:
-        dict with: key, name, value (float, % per 8h), date, url
+        dict with: key, name, value (decimal float), date, url
     """
-    data = _fetch("derivatives/futures_funding_rate_perpetual", {"i": "1h"})
-    latest = data[-1]
-    value = float(latest["v"])
-    data_date = datetime.fromtimestamp(latest["t"], tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    resp = requests.get(
+        "https://fapi.binance.com/fapi/v1/premiumIndex",
+        params={"symbol": "BTCUSDT"},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    value = float(data["lastFundingRate"])
+    next_time = datetime.fromtimestamp(
+        data["nextFundingTime"] / 1000, tz=timezone.utc
+    ).strftime("%Y-%m-%d %H:%M UTC")
 
     return {
         "key": "funding_rate",
         "name": "BTCパーペチュアルFunding Rate",
         "value": value,
-        "date": data_date,
-        "url": "https://studio.glassnode.com/metrics?a=BTC&m=derivatives.FuturesFundingRatePerpetual",
+        "date": next_time,
+        "url": "https://www.binance.com/ja/futures/BTCUSDT",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
