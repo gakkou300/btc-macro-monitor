@@ -40,6 +40,9 @@
     },
     "usdc": {
       "value": 76320174749.5942
+    },
+    "btc_exchange": {
+      "value": 2630449.18518797
     }
   },
   "liquidity": {
