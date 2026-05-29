@@ -9,7 +9,9 @@ EFTS_URL = "https://efts.sec.gov/LATEST/search-index"
 FORMS = "8-K,S-1,19b-4"
 QUERY = '"bitcoin" OR "cryptocurrency" OR "crypto" OR "stablecoin" OR "digital asset"'
 PRIORITY_KEYWORDS = {"bitcoin", "crypto", "etf", "stablecoin", "enforcement"}
-HEADERS = {"User-Agent": "BtcMonitor/1.0 (research use)"}
+# SEC requires User-Agent with email address to avoid 403 blocks
+# See: https://www.sec.gov/os/accessing-edgar-data
+HEADERS = {"User-Agent": "BtcMacroMonitor shinonome.soccer.46@gmail.com"}
 
 
 def fetch_sec_filings(start_date: str | None = None) -> list[dict]:

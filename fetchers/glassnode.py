@@ -118,30 +118,33 @@ def fetch_etf_flow() -> dict:
 
 def fetch_funding_rate() -> dict:
     """
-    Fetch the latest BTC perpetual futures funding rate from Binance.
-    No API key required.
+    Fetch the latest BTC perpetual futures funding rate from Bybit.
+    No API key required. Globally accessible (no geo-restriction).
     Value is in decimal form (e.g. 0.0001 = 0.01% per 8h).
 
     Returns:
         dict with: key, name, value (decimal float), date, url
     """
     resp = requests.get(
-        "https://fapi.binance.com/fapi/v1/premiumIndex",
-        params={"symbol": "BTCUSDT"},
+        "https://api.bybit.com/v5/market/funding/history",
+        params={"category": "linear", "symbol": "BTCUSDT", "limit": 1},
         timeout=30,
     )
     resp.raise_for_status()
     data = resp.json()
-    value = float(data["lastFundingRate"])
-    next_time = datetime.fromtimestamp(
-        data["nextFundingTime"] / 1000, tz=timezone.utc
+    if data.get("retCode") != 0:
+        raise RuntimeError(f"Bybit API error: {data.get('retMsg')}")
+    entry = data["result"]["list"][0]
+    value = float(entry["fundingRate"])
+    data_date = datetime.fromtimestamp(
+        int(entry["fundingRateTimestamp"]) / 1000, tz=timezone.utc
     ).strftime("%Y-%m-%d %H:%M UTC")
 
     return {
         "key": "funding_rate",
         "name": "BTCパーペチュアルFunding Rate",
         "value": value,
-        "date": next_time,
-        "url": "https://www.binance.com/ja/futures/BTCUSDT",
+        "date": data_date,
+        "url": "https://www.bybit.com/ja-JP/trade/usdt/BTCUSDT",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }

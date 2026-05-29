@@ -193,11 +193,8 @@ def run_stablecoin() -> None:
                 f"[BTC_EXCHANGE] No significant change ({result['change_pct']:+.2f}%)"
             )
     except Exception as e:
-        logger.error(f"[BTC_EXCHANGE] Error: {e}")
-        try:
-            notifier.notify_error("取引所BTC保有量")
-        except Exception:
-            pass
+        # Glassnode 無料枠では取得不可のため、Discord通知はせずログのみ
+        logger.error(f"[BTC_EXCHANGE] Error (likely plan restriction): {e}")
 
 
 # ── Phase 3: Liquidity (M2 / WALCL) ──────────────────────────────────────────
@@ -281,11 +278,8 @@ def run_glassnode() -> None:
         else:
             logger.info(f"[ETF_FLOW] No new data (latest: {data['date']})")
     except Exception as e:
-        logger.error(f"[ETF_FLOW] Error: {e}")
-        try:
-            notifier.notify_error("米国スポットBTC ETF純流入")
-        except Exception:
-            pass
+        # Glassnode 無料枠では取得不可のため、Discord通知はせずログのみ
+        logger.error(f"[ETF_FLOW] Error (likely plan restriction): {e}")
 
     # --- Funding Rate (Perpetual) ---
     try:
