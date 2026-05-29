@@ -1,33 +1,8 @@
-import os
 import logging
 import requests
 from datetime import date, datetime, timezone
 
 logger = logging.getLogger(__name__)
-
-GLASSNODE_BASE = "https://api.glassnode.com/v1/metrics"
-
-
-def _get_api_key() -> str:
-    key = os.environ.get("GLASSNODE_API_KEY")
-    if not key:
-        raise EnvironmentError("GLASSNODE_API_KEY is not set")
-    return key
-
-
-def _fetch_glassnode(endpoint: str, params: dict) -> list:
-    """Fetch a Glassnode time-series endpoint. Returns list of {t, v} dicts."""
-    api_key = _get_api_key()
-    p = {"a": "BTC", "api_key": api_key, **params}
-    resp = requests.get(f"{GLASSNODE_BASE}/{endpoint}", params=p, timeout=30)
-    if not resp.ok:
-        raise RuntimeError(
-            f"Glassnode {endpoint} returned HTTP {resp.status_code}: {resp.text[:200]}"
-        )
-    data = resp.json()
-    if not data:
-        raise ValueError(f"Glassnode returned empty data for {endpoint}")
-    return data
 
 
 # ── Fear & Greed Index (Alternative.me — free, no key) ───────────────────────
@@ -86,30 +61,6 @@ def fetch_fear_greed() -> dict:
         "zone_label": zone_label,
         "date": data_date,
         "url": "https://alternative.me/crypto/fear-and-greed-index/",
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-    }
-
-
-# ── US Spot ETF Net Flows (Glassnode) ─────────────────────────────────────────
-
-def fetch_etf_flow() -> dict:
-    """
-    Fetch the latest US Spot BTC ETF daily net flows from Glassnode.
-
-    Returns:
-        dict with: key, name, value (BTC float), date, url
-    """
-    data = _fetch_glassnode("institutions/us_spot_etf_flows_net", {"i": "24h"})
-    latest = data[-1]
-    value = float(latest["v"])
-    data_date = date.fromtimestamp(latest["t"]).isoformat()
-
-    return {
-        "key": "etf_flow",
-        "name": "米国スポットBTC ETF純流入",
-        "value": value,
-        "date": data_date,
-        "url": "https://studio.glassnode.com/metrics?a=BTC&m=institutions.UsSpotEtfFlowsNet",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
