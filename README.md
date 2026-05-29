@@ -39,7 +39,7 @@
 |------|--------|------------|
 | 恐怖&強欲指数 | Alternative.me | ゾーン変化（恐怖↔強欲など） |
 | 取引所BTC純流入（全取引所） | CoinMetrics Community | 新しい日次データ |
-| BTCパーペチュアルFunding Rate | Bybit | 符号反転 または ±0.05%閾値越え |
+| BTCパーペチュアルFunding Rate | OKX | 符号反転 または ±0.05%閾値越え |
 
 ## セットアップ
 
@@ -62,7 +62,6 @@ git push -u origin main
 | `FRED_API_KEY` | https://fred.stlouisfed.org/docs/api/api_key.html | 無料 |
 | `ANTHROPIC_API_KEY` | https://console.anthropic.com/ | 従量課金（$5程度で長期利用可） |
 | `DISCORD_WEBHOOK_URL` | Discord サーバー設定 → 連携サービス → ウェブフック | 無料 |
-| `GLASSNODE_API_KEY` | https://studio.glassnode.com/settings/api | 無料枠あり |
 | `COINGECKO_API_KEY` | https://www.coingecko.com/en/api → Demo API | 任意・レート制限緩和用 |
 
 ### 3. GitHub Actionsを有効化
@@ -77,7 +76,7 @@ Actions → BTC Macro Monitor → Run workflow → mode を選択
 | mode | 実行内容 |
 |------|---------|
 | `monitor` | Phase 1+2（FRED / FOMC / 市場指標） |
-| `glassnode` | Phase 4（Fear&Greed / ETF流入 / Funding Rate） |
+| `glassnode` | Phase 4（Fear&Greed / 取引所BTC純流入 / Funding Rate） |
 | `sec` | Phase 3（SEC EDGAR） |
 | `stablecoin` | Phase 3（USDT / USDC / 取引所BTC保有量） |
 | `liquidity` | Phase 3（M2 / WALCL） |
@@ -117,10 +116,10 @@ btc-macro-monitor/
 │   ├── fomc.py                      # FOMCスクレイピング
 │   ├── market.py                    # Yahoo Finance（DXY・US10Y・NASDAQ・VIX）
 │   ├── sec.py                       # SEC EDGAR（8-K・S-1・19b-4）
-│   ├── stablecoin.py                # CoinGecko（USDT・USDC）+ Glassnode（BTC保有量）
+│   ├── stablecoin.py                # CoinGecko（USDT・USDC）
 │   ├── liquidity.py                 # FRED API（M2・WALCL）
-│   ├── glassnode.py                 # Alternative.me（Fear&Greed）+ Bybit（Funding Rate）+ Glassnode
-│   └── coinmetrics.py               # CoinMetrics Community（取引所保有量・純流入）
+│   ├── glassnode.py                 # Alternative.me（Fear&Greed）+ OKX（Funding Rate）
+│   └── coinmetrics.py               # CoinMetrics Community（取引所BTC保有量・純流入）
 ├── detector.py                      # 前回値との差分検知・閾値判定
 ├── summarizer.py                    # Claude APIで強気/中立/弱気を判定・要約生成
 ├── notifier.py                      # Discord Webhook通知
