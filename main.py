@@ -15,10 +15,11 @@ from fetchers.fred import fetch_fred_series
 from fetchers.fomc import fetch_latest_fomc
 from fetchers.market import fetch_market, TICKERS as MARKET_TICKERS
 from fetchers.sec import fetch_sec_filings
-from fetchers.stablecoin import fetch_stablecoin, fetch_btc_exchange_holdings, STABLECOINS
+from fetchers.stablecoin import fetch_stablecoin, STABLECOINS
+from fetchers.coinmetrics import fetch_exchange_supply, fetch_exchange_netflow
 from fetchers.liquidity import fetch_liquidity, SERIES as LIQUIDITY_SERIES
 from fetchers.glassnode import (
-    fetch_fear_greed, fetch_etf_flow, fetch_funding_rate,
+    fetch_fear_greed, fetch_funding_rate,
     get_fear_greed_zone,
 )
 import detector
@@ -172,9 +173,9 @@ def run_stablecoin() -> None:
                 pass
         time.sleep(2)  # CoinGecko free-tier rate limit
 
-    # BTC exchange holdings via Glassnode（日次・無料枠）
+    # BTC exchange holdings via CoinMetrics Community（無料・キー不要）
     try:
-        data = fetch_btc_exchange_holdings()
+        data = fetch_exchange_supply()
         result = detector.check_btc_exchange_change(data["value"])
 
         if result["changed"]:
@@ -193,8 +194,11 @@ def run_stablecoin() -> None:
                 f"[BTC_EXCHANGE] No significant change ({result['change_pct']:+.2f}%)"
             )
     except Exception as e:
-        # Glassnode 無料枠では取得不可のため、Discord通知はせずログのみ
-        logger.error(f"[BTC_EXCHANGE] Error (likely plan restriction): {e}")
+        logger.error(f"[BTC_EXCHANGE] Error: {e}")
+        try:
+            notifier.notify_error("取引所BTC保有量")
+        except Exception:
+            pass
 
 
 # ── Phase 3: Liquidity (M2 / WALCL) ──────────────────────────────────────────
@@ -263,23 +267,26 @@ def run_glassnode() -> None:
         except Exception:
             pass
 
-    # --- US Spot ETF Net Flows ---
+    # --- 取引所BTC純流入（CoinMetrics Community） ---
     try:
-        data = fetch_etf_flow()
+        data = fetch_exchange_netflow()
         result = detector.check_etf_flow_change(data["date"])
 
         if result["changed"]:
             logger.info(
-                f"[ETF_FLOW] New daily data: {data['date']} / {data['value']:+,.2f} BTC"
+                f"[EXCHANGE_FLOW] New daily data: {data['date']} / {data['value']:+,.2f} BTC"
             )
             summary = summarizer.summarize(data)
             notifier.notify(data["name"], summary, data["url"], data["date"])
             detector.update_etf_flow(data["date"], data["value"])
         else:
-            logger.info(f"[ETF_FLOW] No new data (latest: {data['date']})")
+            logger.info(f"[EXCHANGE_FLOW] No new data (latest: {data['date']})")
     except Exception as e:
-        # Glassnode 無料枠では取得不可のため、Discord通知はせずログのみ
-        logger.error(f"[ETF_FLOW] Error (likely plan restriction): {e}")
+        logger.error(f"[EXCHANGE_FLOW] Error: {e}")
+        try:
+            notifier.notify_error("取引所BTC純流入")
+        except Exception:
+            pass
 
     # --- Funding Rate (Perpetual) ---
     try:

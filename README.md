@@ -29,7 +29,7 @@
 | SEC新着ファイリング | SEC EDGAR | 新着8-K / S-1 / 19b-4 |
 | USDT供給量 | CoinGecko | ±2%以上の変化 |
 | USDC供給量 | CoinGecko | ±2%以上の変化 |
-| 取引所BTC保有量 | Glassnode | ±1%以上の変化 |
+| 取引所BTC保有量 | CoinMetrics Community | ±1%以上の変化 |
 | M2マネーサプライ | FRED API (M2SL) | 新しい月次データ |
 | FRBバランスシート | FRED API (WALCL) | 新しい週次データ |
 
@@ -38,8 +38,8 @@
 | 指標 | ソース | 通知トリガー |
 |------|--------|------------|
 | 恐怖&強欲指数 | Alternative.me | ゾーン変化（恐怖↔強欲など） |
-| 米国スポットBTC ETF純流入 | Glassnode | 新しい日次データ |
-| BTCパーペチュアルFunding Rate | Binance Futures | 符号反転 または ±0.05%閾値越え |
+| 取引所BTC純流入（全取引所） | CoinMetrics Community | 新しい日次データ |
+| BTCパーペチュアルFunding Rate | Bybit | 符号反転 または ±0.05%閾値越え |
 
 ## セットアップ
 
@@ -119,7 +119,8 @@ btc-macro-monitor/
 │   ├── sec.py                       # SEC EDGAR（8-K・S-1・19b-4）
 │   ├── stablecoin.py                # CoinGecko（USDT・USDC）+ Glassnode（BTC保有量）
 │   ├── liquidity.py                 # FRED API（M2・WALCL）
-│   └── glassnode.py                 # Alternative.me + Binance + Glassnode
+│   ├── glassnode.py                 # Alternative.me（Fear&Greed）+ Bybit（Funding Rate）+ Glassnode
+│   └── coinmetrics.py               # CoinMetrics Community（取引所保有量・純流入）
 ├── detector.py                      # 前回値との差分検知・閾値判定
 ├── summarizer.py                    # Claude APIで強気/中立/弱気を判定・要約生成
 ├── notifier.py                      # Discord Webhook通知
