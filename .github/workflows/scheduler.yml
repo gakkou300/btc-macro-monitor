@@ -19,9 +19,6 @@ on:
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 # ── 共通ステップ定義 ───────────────────────────────────────────────────────────
 # GitHub Actionsはreusable workflowが使えるが、シンプルさのため各jobに展開する
 
