@@ -114,11 +114,11 @@ def fetch_etf_flow() -> dict:
     }
 
 
-# ── Funding Rate Perpetual (Binance — free, no key) ───────────────────────────
+# ── Funding Rate Perpetual (OKX — free, no key, globally accessible) ─────────
 
 def fetch_funding_rate() -> dict:
     """
-    Fetch the latest BTC perpetual futures funding rate from Bybit.
+    Fetch the latest BTC perpetual futures funding rate from OKX.
     No API key required. Globally accessible (no geo-restriction).
     Value is in decimal form (e.g. 0.0001 = 0.01% per 8h).
 
@@ -126,18 +126,18 @@ def fetch_funding_rate() -> dict:
         dict with: key, name, value (decimal float), date, url
     """
     resp = requests.get(
-        "https://api.bybit.com/v5/market/funding/history",
-        params={"category": "linear", "symbol": "BTCUSDT", "limit": 1},
+        "https://www.okx.com/api/v5/public/funding-rate",
+        params={"instId": "BTC-USDT-SWAP"},
         timeout=30,
     )
     resp.raise_for_status()
     data = resp.json()
-    if data.get("retCode") != 0:
-        raise RuntimeError(f"Bybit API error: {data.get('retMsg')}")
-    entry = data["result"]["list"][0]
+    if data.get("code") != "0":
+        raise RuntimeError(f"OKX API error: {data.get('msg')}")
+    entry = data["data"][0]
     value = float(entry["fundingRate"])
     data_date = datetime.fromtimestamp(
-        int(entry["fundingRateTimestamp"]) / 1000, tz=timezone.utc
+        int(entry["fundingTime"]) / 1000, tz=timezone.utc
     ).strftime("%Y-%m-%d %H:%M UTC")
 
     return {
@@ -145,6 +145,6 @@ def fetch_funding_rate() -> dict:
         "name": "BTCパーペチュアルFunding Rate",
         "value": value,
         "date": data_date,
-        "url": "https://www.bybit.com/ja-JP/trade/usdt/BTCUSDT",
+        "url": "https://www.okx.com/trade-swap/btc-usdt-swap",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }

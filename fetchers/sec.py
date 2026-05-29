@@ -40,22 +40,31 @@ def fetch_sec_filings(start_date: str | None = None) -> list[dict]:
     for hit in hits:
         source = hit.get("_source", {})
         filing_id = hit.get("_id", "")
-        entity_name = source.get("entity_name", "不明")
+        # _id format is "{accession_number}:{filename}", e.g. "0001477932-26-003478:class_ex991.htm"
+        accession = filing_id.split(":")[0]  # "0001477932-26-003478"
+
+        # entity_name may be empty in EFTS response — fall back to display_names
+        entity_name = source.get("entity_name", "") or ""
+        display_names = source.get("display_names", [])
+        if not entity_name and display_names:
+            # display_names entries look like "Company Name (CIK 0001234567)"
+            entity_name = display_names[0].split(" (CIK")[0].strip()
+        entity_name = entity_name or "不明"
+
         form_type = source.get("form_type", "不明")
         file_date = source.get("file_date", today)
-        display_names = source.get("display_names", [])
 
         # Build filing index URL using CIK from display_names
         cik = _extract_cik(display_names)
-        accession_no_dashes = filing_id.replace("-", "")
+        accession_no_dashes = accession.replace("-", "")
         if cik:
             url = (
                 f"https://www.sec.gov/Archives/edgar/data"
-                f"/{cik}/{accession_no_dashes}/{filing_id}-index.htm"
+                f"/{cik}/{accession_no_dashes}/{accession}-index.htm"
             )
         else:
             # Fallback: EDGAR full-text search for this accession number
-            url = f"https://efts.sec.gov/LATEST/search-index?q=%22{filing_id}%22"
+            url = f"https://efts.sec.gov/LATEST/search-index?q=%22{accession}%22"
 
         # Title: company name + form type
         title = f"{entity_name} [{form_type}]"
