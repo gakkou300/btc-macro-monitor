@@ -43,19 +43,26 @@ def fetch_sec_filings(start_date: str | None = None) -> list[dict]:
         # _id format is "{accession_number}:{filename}", e.g. "0001477932-26-003478:class_ex991.htm"
         accession = filing_id.split(":")[0]  # "0001477932-26-003478"
 
+        display_names = source.get("display_names", [])
+
         # entity_name may be empty in EFTS response — fall back to display_names
         entity_name = source.get("entity_name", "") or ""
-        display_names = source.get("display_names", [])
         if not entity_name and display_names:
             # display_names entries look like "Company Name (CIK 0001234567)"
             entity_name = display_names[0].split(" (CIK")[0].strip()
         entity_name = entity_name or "不明"
 
-        form_type = source.get("form_type", "不明")
-        file_date = source.get("file_date", today)
+        # form_type may be absent for exhibit documents — fall back to submissions API
+        form_type = source.get("form_type") or ""
 
         # Build filing index URL using CIK from display_names
         cik = _extract_cik(display_names)
+
+        if not form_type and cik:
+            form_type = _fetch_form_type_by_cik(cik, accession)
+        form_type = form_type or "不明"
+
+        file_date = source.get("file_date", today)
         accession_no_dashes = accession.replace("-", "")
         if cik:
             url = (
@@ -93,3 +100,38 @@ def _extract_cik(display_names: list) -> str | None:
         if m:
             return m.group(1)
     return None
+
+
+def _fetch_form_type_by_cik(cik: str, accession: str) -> str:
+    """
+    Look up form type from EDGAR company submissions API.
+    Used as fallback when EFTS _source.form_type is absent (e.g. exhibit documents).
+
+    Args:
+        cik: Company CIK as string (without leading zeros)
+        accession: Accession number with dashes, e.g. "0001477932-26-003478"
+
+    Returns:
+        Form type string (e.g. "8-K") or empty string if not found.
+    """
+    try:
+        padded = f"CIK{cik.zfill(10)}"
+        resp = requests.get(
+            f"https://data.sec.gov/submissions/{padded}.json",
+            headers=HEADERS,
+            timeout=10,
+        )
+        if not resp.ok:
+            logger.warning(f"[SEC] submissions API returned {resp.status_code} for CIK {cik}")
+            return ""
+        recent = resp.json().get("filings", {}).get("recent", {})
+        accession_numbers = recent.get("accessionNumber", [])
+        forms = recent.get("form", [])
+        for i, acc in enumerate(accession_numbers):
+            if acc == accession:
+                return forms[i]
+        logger.debug(f"[SEC] Accession {accession} not found in recent filings for CIK {cik}")
+        return ""
+    except Exception as e:
+        logger.warning(f"[SEC] Failed to fetch form type for CIK {cik}: {e}")
+        return ""
