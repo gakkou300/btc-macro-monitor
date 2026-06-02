@@ -129,7 +129,12 @@ def run_sec() -> None:
 
         logger.info(f"[SEC] {len(new_filings)} new filing(s) found")
         for filing in new_filings:
-            notifier.notify_sec(filing)
+            try:
+                summary = summarizer.summarize(filing)
+            except Exception as e:
+                logger.warning(f"[SEC] Summarizer failed for {filing['title']}: {e}")
+                summary = None
+            notifier.notify_sec(filing, summary)
 
         detector.update_sec(new_filings)
 

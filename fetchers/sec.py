@@ -81,6 +81,7 @@ def fetch_sec_filings(start_date: str | None = None) -> list[dict]:
         is_priority = any(kw in text for kw in PRIORITY_KEYWORDS)
 
         results.append({
+            "key": "sec_filing",
             "id": filing_id,
             "title": title,
             "entity_name": entity_name,

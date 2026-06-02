@@ -28,18 +28,31 @@ def notify(
 
 # ── Phase 3: SEC filing notification ──────────────────────────────────────────
 
-def notify_sec(filing: dict) -> None:
-    """Send a SEC EDGAR filing notification."""
+def notify_sec(filing: dict, summary_result: dict | None = None) -> None:
+    """Send a SEC EDGAR filing notification with optional Claude summary."""
     priority_flag = "🚨 優先" if filing["priority"] else "📄 通常"
-    message = (
-        f"**【BTC Monitor】📋 SEC新着ファイリング**\n"
-        f"{priority_flag}\n\n"
-        f"タイトル: {filing['title']}\n"
-        f"提出者: {filing['entity_name']}\n"
-        f"種別: {filing['form_type']}\n\n"
-        f"🔗 {filing['url']}\n"
-        f"📅 {filing['file_date']}"
-    )
+    if summary_result:
+        message = (
+            f"**【BTC Monitor】📋 SEC新着ファイリング**\n"
+            f"{priority_flag}\n\n"
+            f"タイトル: {filing['title']}\n"
+            f"提出者: {filing['entity_name']}\n"
+            f"種別: {filing['form_type']}\n\n"
+            f"{summary_result['emoji']} {summary_result['judgment']}\n"
+            f"{summary_result['summary']}\n\n"
+            f"🔗 {filing['url']}\n"
+            f"📅 {filing['file_date']}"
+        )
+    else:
+        message = (
+            f"**【BTC Monitor】📋 SEC新着ファイリング**\n"
+            f"{priority_flag}\n\n"
+            f"タイトル: {filing['title']}\n"
+            f"提出者: {filing['entity_name']}\n"
+            f"種別: {filing['form_type']}\n\n"
+            f"🔗 {filing['url']}\n"
+            f"📅 {filing['file_date']}"
+        )
     _send(message)
 
 

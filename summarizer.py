@@ -49,6 +49,15 @@ def summarize(data: dict) -> dict:
 
 
 def _build_user_message(data: dict) -> str:
+    # SEC filing – company + form type metadata
+    if data.get("key") == "sec_filing":
+        return (
+            f"指標: SEC新着ファイリング\n"
+            f"提出者: {data['entity_name']}\n"
+            f"種別: {data['form_type']}\n"
+            f"日付: {data['file_date']}"
+        )
+
     # FOMC – has document body
     if data.get("content"):
         return (
