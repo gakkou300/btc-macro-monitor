@@ -4,8 +4,8 @@
     "value": "332.407"
   },
   "nfp": {
-    "date": "2026-04-01",
-    "value": "158736"
+    "date": "2026-05-01",
+    "value": "159001"
   },
   "fomc": {
     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm",
@@ -13,16 +13,16 @@
   },
   "market": {
     "dxy": {
-      "value": 99.55000305175781
+      "value": 100.06600189208984
     },
     "us10y": {
-      "value": 4.5
+      "value": 4.547999858856201
     },
     "nasdaq": {
-      "value": 26999.939453125
+      "value": 25861.849609375
     },
     "vix": {
-      "value": 16.649999618530273
+      "value": 18.809999465942383
     }
   },
   "sec": {
