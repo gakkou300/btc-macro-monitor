@@ -11,6 +11,8 @@
 |------|--------|------------|
 | CPI（消費者物価指数） | FRED API (CPIAUCSL) | 新しい月次データ |
 | NFP（非農業部門雇用者数） | FRED API (PAYEMS) | 新しい月次データ |
+| 失業率 | FRED API (UNRATE) | 新しい月次データ |
+| 新規失業保険申請件数 | FRED API (ICSA) | 新しい週次データ |
 | FOMC議事録/声明文 | federalreserve.gov | 新しいドキュメント |
 
 ### Phase 2 — 市場指標（毎時監視）

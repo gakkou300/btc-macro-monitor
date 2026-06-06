@@ -17,6 +17,16 @@ SERIES = {
         "name": "NFP (非農業部門雇用者数)",
         "url": "https://fred.stlouisfed.org/series/PAYEMS",
     },
+    "unrate": {
+        "id": "UNRATE",
+        "name": "失業率",
+        "url": "https://fred.stlouisfed.org/series/UNRATE",
+    },
+    "icsa": {
+        "id": "ICSA",
+        "name": "新規失業保険申請件数",
+        "url": "https://fred.stlouisfed.org/series/ICSA",
+    },
 }
 
 

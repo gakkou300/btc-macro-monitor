@@ -35,8 +35,10 @@ LIQUIDITY_KEYS = ["m2sl", "walcl"]
 
 def run_fred(key: str) -> None:
     name_map = {
-        "cpi": "CPI (消費者物価指数)",
-        "nfp": "NFP (非農業部門雇用者数)",
+        "cpi":    "CPI (消費者物価指数)",
+        "nfp":    "NFP (非農業部門雇用者数)",
+        "unrate": "失業率",
+        "icsa":   "新規失業保険申請件数",
     }
     try:
         data = fetch_fred_series(key)
@@ -340,6 +342,8 @@ def main() -> None:
     if args.mode == "monitor":
         run_fred("cpi")
         run_fred("nfp")
+        run_fred("unrate")
+        run_fred("icsa")
         run_fomc()
         for key in MARKET_KEYS:
             run_market(key)

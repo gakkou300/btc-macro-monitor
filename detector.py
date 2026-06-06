@@ -10,9 +10,11 @@ STATE_FILE = Path(__file__).parent / "state.json"
 
 _DEFAULT_STATE: dict = {
     # Phase 1
-    "cpi":  {"date": None, "value": None},
-    "nfp":  {"date": None, "value": None},
-    "fomc": {"url": None, "date": None},
+    "cpi":    {"date": None, "value": None},
+    "nfp":    {"date": None, "value": None},
+    "unrate": {"date": None, "value": None},
+    "icsa":   {"date": None, "value": None},
+    "fomc":   {"url": None, "date": None},
     # Phase 2
     "market": {
         "dxy":    {"value": None},
