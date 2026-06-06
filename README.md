@@ -1,19 +1,20 @@
 # BTC Macro Monitor
 
-ビットコイン短期トレード向けのマクロ・オンチェーン指標監視システム。
-新着データや有意な変化を検知したら Discord に通知・AI要約する。
+ビットコイン短期トレードの**意思決定補助**を目的としたマクロ・オンチェーン指標監視システム。
+
+マクロ経済・市場・オンチェーン・センチメントの各指標を自動監視し、新着データや有意な変化を検知したら Discord に通知する。各通知には Claude による BTC への影響分析（強気 / 中立 / 弱気）を付与し、エントリー・エグジットの判断材料として活用できる。
 
 ## 監視指標
 
-### Phase 1 — マクロ経済（月次）
+### Phase 1 — マクロ経済
 
-| 指標 | ソース | 通知トリガー |
-|------|--------|------------|
-| CPI（消費者物価指数） | FRED API (CPIAUCSL) | 新しい月次データ |
-| NFP（非農業部門雇用者数） | FRED API (PAYEMS) | 新しい月次データ |
-| 失業率 | FRED API (UNRATE) | 新しい月次データ |
-| 新規失業保険申請件数 | FRED API (ICSA) | 新しい週次データ |
-| FOMC議事録/声明文 | federalreserve.gov | 新しいドキュメント |
+| 指標 | ソース | 頻度 | 通知トリガー |
+|------|--------|------|------------|
+| CPI（消費者物価指数） | FRED API (CPIAUCSL) | 月次 | 新しいデータ |
+| NFP（非農業部門雇用者数） | FRED API (PAYEMS) | 月次 | 新しいデータ |
+| 失業率 | FRED API (UNRATE) | 月次 | 新しいデータ |
+| 新規失業保険申請件数 | FRED API (ICSA) | 週次 | 新しいデータ |
+| FOMC議事録/声明文 | federalreserve.gov | 不定期 | 新しいドキュメント |
 
 ### Phase 2 — 市場指標（毎時監視）
 
@@ -114,7 +115,7 @@ python main.py --mode liquidity
 btc-macro-monitor/
 ├── .github/workflows/scheduler.yml  # GitHub Actions（自動実行）
 ├── fetchers/
-│   ├── fred.py                      # FRED API（CPI・NFP・M2・WALCL）
+│   ├── fred.py                      # FRED API（CPI・NFP・失業率・新規申請件数・M2・WALCL）
 │   ├── fomc.py                      # FOMCスクレイピング
 │   ├── market.py                    # Yahoo Finance（DXY・US10Y・NASDAQ・VIX）
 │   ├── sec.py                       # SEC EDGAR（8-K・S-1・19b-4）
@@ -132,7 +133,7 @@ btc-macro-monitor/
 
 ## 通知フォーマット
 
-**Claude要約あり（Phase 1・2・4）**
+**Claude要約あり（Phase 1・2・3・4）**
 ```
 【BTC Monitor】CPI（消費者物価指数）
 🔴 弱気
@@ -144,6 +145,23 @@ CPIが前月比+0.4%と予想を上回る結果。インフレ再燃懸念から
 📅 2025-05-14
 ```
 
+**SEC通知（Claude要約あり）**
+```
+【BTC Monitor】📋 SEC新着ファイリング
+🚨 優先
+
+タイトル: BlackRock Inc. [19b-4]
+提出者: BlackRock Inc.
+種別: 19b-4
+
+🟢 強気
+BlackRockによる19b-4提出はビットコインETF関連の規制申請。
+承認されれば機関資金の大規模流入が見込まれ、短期的に強い買い圧力となる。
+
+🔗 https://www.sec.gov/...
+📅 2025-05-14
+```
+
 **数値通知（Phase 3 — stablecoin・liquidity）**
 ```
 【BTC Monitor】USDT供給量
@@ -152,17 +170,4 @@ CPIが前月比+0.4%と予想を上回る結果。インフレ再燃懸念から
 現在値: 189.583B USDT
 前回比: +2.15%
 📅 2025-05-14 09:00 UTC
-```
-
-**SEC通知**
-```
-【BTC Monitor】📋 SEC新着ファイリング
-🚨 優先
-
-タイトル: BlackRock Bitcoin ETF Amendment
-提出者: BlackRock Inc.
-種別: 19b-4
-
-🔗 https://www.sec.gov/...
-📅 2025-05-14
 ```
