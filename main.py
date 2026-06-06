@@ -11,13 +11,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from fetchers.fred import fetch_fred_series
+from fetchers.fred import fetch_fred_series, SERIES as FRED_SERIES
 from fetchers.fomc import fetch_latest_fomc
 from fetchers.market import fetch_market, TICKERS as MARKET_TICKERS
 from fetchers.sec import fetch_sec_filings
 from fetchers.stablecoin import fetch_stablecoin, STABLECOINS
 from fetchers.coinmetrics import fetch_exchange_supply, fetch_exchange_netflow
-from fetchers.liquidity import fetch_liquidity, SERIES as LIQUIDITY_SERIES
 from fetchers.glassnode import (
     fetch_fear_greed, fetch_funding_rate,
     get_fear_greed_zone,
@@ -34,12 +33,6 @@ LIQUIDITY_KEYS = ["m2sl", "walcl"]
 # ── Phase 1: FRED ─────────────────────────────────────────────────────────────
 
 def run_fred(key: str) -> None:
-    name_map = {
-        "cpi":    "CPI (消費者物価指数)",
-        "nfp":    "NFP (非農業部門雇用者数)",
-        "unrate": "失業率",
-        "icsa":   "新規失業保険申請件数",
-    }
     try:
         data = fetch_fred_series(key)
         if detector.is_new_fred(key, data):
@@ -52,7 +45,7 @@ def run_fred(key: str) -> None:
     except Exception as e:
         logger.error(f"[{key.upper()}] Error: {e}")
         try:
-            notifier.notify_error(name_map[key])
+            notifier.notify_error(FRED_SERIES[key]["name"])
         except Exception:
             pass
 
@@ -213,7 +206,7 @@ def run_stablecoin() -> None:
 def run_liquidity() -> None:
     for key in LIQUIDITY_KEYS:
         try:
-            data = fetch_liquidity(key)
+            data = fetch_fred_series(key)
             result = detector.check_liquidity_change(key, data["date"], data["value"])
 
             if result["changed"]:
@@ -237,7 +230,7 @@ def run_liquidity() -> None:
         except Exception as e:
             logger.error(f"[{key.upper()}] Error: {e}")
             try:
-                notifier.notify_error(LIQUIDITY_SERIES[key]["name"])
+                notifier.notify_error(FRED_SERIES[key]["name"])
             except Exception:
                 pass
 

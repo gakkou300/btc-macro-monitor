@@ -4,6 +4,8 @@ import logging
 from datetime import date
 from pathlib import Path
 
+import config
+
 logger = logging.getLogger(__name__)
 
 STATE_FILE = Path(__file__).parent / "state.json"
@@ -40,17 +42,6 @@ _DEFAULT_STATE: dict = {
         "funding_rate": {"value": None},
     },
 }
-
-# Phase 2: market thresholds
-# type "pct" → relative change; type "abs" → absolute change
-_MARKET_THRESHOLDS: dict[str, dict] = {
-    "dxy":    {"type": "pct", "value": 0.005},   # 0.5%
-    "us10y":  {"type": "abs", "value": 0.03},    # 3bp (TNX is in % points)
-    "nasdaq": {"type": "pct", "value": 0.010},   # 1.0%
-    "vix":    {"type": "pct", "value": 0.10},    # 10%
-}
-_VIX_PRIORITY_LEVEL = 20.0
-
 
 # ── internal helpers ──────────────────────────────────────────────────────────
 
@@ -126,7 +117,7 @@ def check_market_change(key: str, current_value: float) -> dict:
     if prev_value is None:
         return {
             "changed": True,
-            "priority": key == "vix" and current_value > _VIX_PRIORITY_LEVEL,
+            "priority": key == "vix" and current_value > config.VIX_PRIORITY_LEVEL,
             "prev_value": None,
             "change_pct": 0.0,
             "change_abs": 0.0,
@@ -134,13 +125,13 @@ def check_market_change(key: str, current_value: float) -> dict:
 
     change_abs = current_value - prev_value
     change_pct = (change_abs / prev_value * 100) if prev_value != 0 else 0.0
-    cfg = _MARKET_THRESHOLDS[key]
+    cfg = config.MARKET_THRESHOLDS[key]
     changed = (
         abs(change_pct / 100) >= cfg["value"]
         if cfg["type"] == "pct"
         else abs(change_abs) >= cfg["value"]
     )
-    priority = key == "vix" and changed and current_value > _VIX_PRIORITY_LEVEL
+    priority = key == "vix" and changed and current_value > config.VIX_PRIORITY_LEVEL
 
     return {
         "changed": changed,
@@ -198,7 +189,7 @@ def check_stablecoin_change(key: str, current_value: float) -> dict:
     state = _load_state()
     raw = state.get("stablecoin", {}).get(key, {}).get("value")
     prev = float(raw) if raw is not None else None
-    return _check_pct_change(prev, current_value, threshold_pct=2.0)
+    return _check_pct_change(prev, current_value, threshold_pct=config.STABLECOIN_THRESHOLD_PCT)
 
 
 def check_btc_exchange_change(current_value: float) -> dict:
@@ -206,7 +197,7 @@ def check_btc_exchange_change(current_value: float) -> dict:
     state = _load_state()
     raw = state.get("stablecoin", {}).get("btc_exchange", {}).get("value")
     prev = float(raw) if raw is not None else None
-    return _check_pct_change(prev, current_value, threshold_pct=1.0)
+    return _check_pct_change(prev, current_value, threshold_pct=config.BTC_EXCHANGE_THRESHOLD_PCT)
 
 
 def update_stablecoin(key: str, value: float) -> None:
@@ -229,7 +220,7 @@ def check_liquidity_change(key: str, current_date: str, current_value: float) ->
     if current_date == prev_date:
         return {"changed": False, "prev_value": prev_value, "change_pct": 0.0, "change_abs": 0.0}
 
-    return _check_pct_change(prev_value, current_value, threshold_pct=0.5)
+    return _check_pct_change(prev_value, current_value, threshold_pct=config.LIQUIDITY_THRESHOLD_PCT)
 
 
 def update_liquidity(key: str, date_str: str, value: float) -> None:
@@ -294,9 +285,6 @@ def update_etf_flow(date_str: str, value: float) -> None:
     logger.info(f"[ETF_FLOW] State updated: {date_str} / {value:+,.2f} BTC")
 
 
-_FUNDING_RATE_THRESHOLD = 0.0005  # 0.05% per 8h
-
-
 def check_funding_rate_change(current_value: float) -> dict:
     """
     Notify on sign flip (positive ↔ negative) or when |rate| crosses the
@@ -310,8 +298,8 @@ def check_funding_rate_change(current_value: float) -> dict:
         return {"changed": False, "prev_value": None}
 
     sign_changed = (current_value >= 0) != (prev_value >= 0)
-    prev_extreme = abs(prev_value) >= _FUNDING_RATE_THRESHOLD
-    curr_extreme = abs(current_value) >= _FUNDING_RATE_THRESHOLD
+    prev_extreme = abs(prev_value) >= config.FUNDING_RATE_THRESHOLD
+    curr_extreme = abs(current_value) >= config.FUNDING_RATE_THRESHOLD
     threshold_crossed = prev_extreme != curr_extreme
 
     return {

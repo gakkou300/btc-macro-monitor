@@ -4,8 +4,6 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-LINE_NOTIFY_URL = "https://notify-api.line.me/api/notify"
-
 
 # ── Phase 1 & 2: Claude-summarized notifications ──────────────────────────────
 
@@ -31,28 +29,22 @@ def notify(
 def notify_sec(filing: dict, summary_result: dict | None = None) -> None:
     """Send a SEC EDGAR filing notification with optional Claude summary."""
     priority_flag = "🚨 優先" if filing["priority"] else "📄 通常"
+    summary_block = ""
     if summary_result:
-        message = (
-            f"**【BTC Monitor】📋 SEC新着ファイリング**\n"
-            f"{priority_flag}\n\n"
-            f"タイトル: {filing['title']}\n"
-            f"提出者: {filing['entity_name']}\n"
-            f"種別: {filing['form_type']}\n\n"
+        summary_block = (
             f"{summary_result['emoji']} {summary_result['judgment']}\n"
             f"{summary_result['summary']}\n\n"
-            f"🔗 {filing['url']}\n"
-            f"📅 {filing['file_date']}"
         )
-    else:
-        message = (
-            f"**【BTC Monitor】📋 SEC新着ファイリング**\n"
-            f"{priority_flag}\n\n"
-            f"タイトル: {filing['title']}\n"
-            f"提出者: {filing['entity_name']}\n"
-            f"種別: {filing['form_type']}\n\n"
-            f"🔗 {filing['url']}\n"
-            f"📅 {filing['file_date']}"
-        )
+    message = (
+        f"**【BTC Monitor】📋 SEC新着ファイリング**\n"
+        f"{priority_flag}\n\n"
+        f"タイトル: {filing['title']}\n"
+        f"提出者: {filing['entity_name']}\n"
+        f"種別: {filing['form_type']}\n\n"
+        f"{summary_block}"
+        f"🔗 {filing['url']}\n"
+        f"📅 {filing['file_date']}"
+    )
     _send(message)
 
 
