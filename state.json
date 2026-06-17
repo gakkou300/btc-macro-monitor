@@ -8,21 +8,21 @@
     "value": "159001"
   },
   "fomc": {
-    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm",
-    "date": "2026-04-29"
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260617a.htm",
+    "date": "2026-06-17"
   },
   "market": {
     "dxy": {
-      "value": 99.55899810791016
+      "value": 100.38800048828125
     },
     "us10y": {
-      "value": 4.424000263214111
+      "value": 4.463000297546387
     },
     "nasdaq": {
-      "value": 26376.34375
+      "value": 26021.65625
     },
     "vix": {
-      "value": 16.299999237060547
+      "value": 18.440000534057617
     }
   },
   "sec": {
