@@ -65,16 +65,16 @@
   },
   "glassnode": {
     "fear_greed": {
-      "value": 27.0,
-      "zone": "fear",
-      "date": "2026-07-07"
+      "value": 20.0,
+      "zone": "extreme_fear",
+      "date": "2026-07-08"
     },
     "etf_flow": {
       "date": "2026-07-06",
       "value": -5036.039387299999
     },
     "funding_rate": {
-      "value": 6.57278093842e-05
+      "value": 5.63006255623e-05
     }
   },
   "unrate": {
