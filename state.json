@@ -4,8 +4,8 @@
     "value": 332.568
   },
   "nfp": {
-    "date": "2026-06-01",
-    "value": 158984.0
+    "date": "2026-07-01",
+    "value": 158858.0
   },
   "fomc": {
     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260729a.htm",
@@ -69,8 +69,8 @@
     }
   },
   "unrate": {
-    "date": "2026-06-01",
-    "value": 4.2
+    "date": "2026-07-01",
+    "value": 4.1
   },
   "icsa": {
     "date": "2026-08-01",
