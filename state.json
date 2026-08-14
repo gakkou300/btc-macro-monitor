@@ -73,14 +73,14 @@
     "fear_greed": {
       "value": 29.0,
       "zone": "fear",
-      "date": "2026-08-13"
+      "date": "2026-08-14"
     },
     "etf_flow": {
       "date": "2026-08-12",
       "value": 801.8898621899971
     },
     "funding_rate": {
-      "value": 0.0001
+      "value": 9.68846662774e-05
     }
   },
   "unrate": {
